@@ -31,7 +31,7 @@ fn main() {
     //Validate an incorrect root hash for a list of leaves.This will return false.
     let y = validate(
         &list,
-        "0ACC9779AB6EBD977EF3B27A5E0A66E9A335F7BC7C341DD093F8E21F4F0FAC7F",
+        "1ACC9779AB6EBD977EF3B27A5E0A66E9A335F7BC7C341DD093F8E21F4F0FAC7F",
     );
     dbg!(y);
 
