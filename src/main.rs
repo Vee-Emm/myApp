@@ -114,6 +114,7 @@ fn verify_proof() -> bool{
     return proof.verify(&example_leaf, &tree.get_root());
 }
 
+#[test]
 fn test_merkle_tree() {
     let leaf0 = MTreeNodeSmt::new("leaf0leaf0leaf0leaf0leaf0leaf0le".as_bytes().to_vec());
     let leaf1 = MTreeNodeSmt::new("leaf1leaf1leaf1leaf1leaf1leaf1le".as_bytes().to_vec());
@@ -150,11 +151,11 @@ fn test_merkle_tree() {
     );
 
 
-    let y =  &tree.get_root().serialize();
-    let z = y.as_slice();
-    dbg!(&z);
-    dbg!(hex::encode(&z));
-    dbg!(&tree);
+    let y = tree.get_root().serialize();
+    // let z = y.as_slice();
+    // dbg!(&z);
+    dbg!(&hex::encode(y));
+    // dbg!(&tree);
 
 }
 
