@@ -1,19 +1,21 @@
-#https://github.com/fmerg/pymerkle/blob/master/USAGE.rst
-
 from pymerkle import *
 from pymerkle import MerkleTree
 
-tree = MerkleTree("leaf0","leaf1","leaf2","leaf3")
+tree = MerkleTree('leaf0leaf0leaf0leaf0leaf0leaf0le',
+                    'leaf1leaf1leaf1leaf1leaf1leaf1le',
+                    'leaf2leaf2leaf2leaf2leaf2leaf2le',
+                    'leaf3leaf3leaf3leaf3leaf3leaf3le',
+                    security=False)
+
 print(tree)
 
+
 #
-# Example input  : "leaf0","leaf1","leaf2","leaf3"
 # 
-# Example Output : 
-#  └─345f29830744114d98109fdb09d306586e02197549bab266a4d23d1a52579f8a
-#      ├──507c3bb6c20bec99a271b837c489809d7c0f42160cbe3781020e732b575382fa
-#      │    ├──e6c410a9745b0151d82d1a9f007b81f378a1588c3fb63dc634a2ab001379c3d2
-#      │    └──116af79823b7adaaa73481ee191803ceba570272f809decdcdf5340426f1ace9
-#      └──56640a8541a5f092e015814d96c2ef4635f406068519fa4e0af06d4ceaa61d6a
-#           ├──30415163f9aea87a7f53b3679c4d75318ee1367567efb6b2183c0e875ab02b4e
-#           └──f1fbbbe36a7c26642bf89e87d44e785402b9e723cd9b190566ff6a5f8a1de294
+# └─ec01ad34fcdc08a0cd5af5761a8840c8f96a2397504229eff77607a1b3c64528
+#      ├──2119cd5b5bbfa027f3f56de6bb1f5537c302bc4c31335a83d7726a5f8974a4af
+#      │    ├──96f1ce1008b5c50024edbd0652c0e3b6213d38b8ee55c9b44a34cb95e5d05892
+#      │    └──1b44ca99048d6e248d9ea1485b6a6a78aa55e668c0acdfce5ebb09c6c07e38f6
+#      └──bb6bddb7d1bb9989b3cac31edb9fb937984028ded7a4538a0d0cc1af093d2b4a
+#           ├──271cc86d8d22a063a64b8322b366477171aa90682fbae80d2871d64467fa1e8e
+#           └──d27fbdec640e79f86586dcc772da0a5d375383e2b2e0e1f1a5db0d86f3745a8a
