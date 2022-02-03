@@ -1,5 +1,7 @@
 extern crate hex_slice;
 use crate::node_template::MTreeNodeSmt;
+use blake2::Digest;
+use sha2::Sha256;
 use smtree::{node_template, traits::Serializable, tree::SparseMerkleTree, utils::print_output};
 type SMT<P> = SparseMerkleTree<P>;
 use smtree::index::{TreeIndex};
@@ -112,6 +114,28 @@ fn verify_proof() -> bool{
     dbg!(&(proof.serialize()));
      
     return proof.verify(&example_leaf, &tree.get_root());
+}
+
+#[test]
+// run with " cargo test -- --nocapture " to see print outs on tests that pass.
+fn hash_sanity() {
+    let mut a = sha2::Sha256::new();
+    a.update(b"leaf0leaf0leaf0leaf0leaf0leaf0le");
+    // dbg!(&hex::encode(a.finalize()));
+    assert_eq!("96f1ce1008b5c50024edbd0652c0e3b6213d38b8ee55c9b44a34cb95e5d05892", &hex::encode(&a.finalize()))
+}
+
+#[test]
+// run with " cargo test -- --nocapture " to see print outs on tests that pass.
+fn correct_hasher() {
+    let leaf0 = MTreeNodeSmt::<Sha256>::new(b"leaf0leaf0leaf0leaf0leaf0leaf0le".to_vec());    
+    let leaf0alt = MTreeNodeSmt::<blake2::Blake2b>::new(b"leaf0leaf0leaf0leaf0leaf0leaf0le".to_vec());
+
+    dbg!(&hex::encode(leaf0.serialize()));
+    dbg!(&hex::encode(leaf0alt.serialize()));
+
+    assert_ne!(&hex::encode(leaf0.serialize()), &hex::encode(leaf0alt.serialize()));
+    assert_ne!(leaf0.serialize(), leaf0alt.serialize());
 }
 
 #[test]
