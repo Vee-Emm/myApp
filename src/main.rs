@@ -115,6 +115,7 @@ fn verify_proof() -> bool{
 }
 
 #[test]
+// run with " cargo test -- --nocapture " to see print outs on tests that pass.
 fn test_merkle_tree() {
     let leaf0 = MTreeNodeSmt::new("leaf0leaf0leaf0leaf0leaf0leaf0le".as_bytes().to_vec());
     let leaf1 = MTreeNodeSmt::new("leaf1leaf1leaf1leaf1leaf1leaf1le".as_bytes().to_vec());
