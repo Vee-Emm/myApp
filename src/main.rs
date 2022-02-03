@@ -2,11 +2,18 @@ extern crate hex_slice;
 use crate::node_template::MTreeNodeSmt;
 use smtree::{node_template, traits::Serializable, tree::SparseMerkleTree, utils::print_output};
 type SMT<P> = SparseMerkleTree<P>;
+use smtree::index::{TreeIndex};
+use smtree::proof::{MerkleProof};
+use smtree::traits::{InclusionProvable, ProofExtractable};
+use std::str;
+use hex::{encode,decode};
+
+
 
 fn main() {
     println!("Hello, world!");
 
-    let list: Vec<MTreeNodeSmt<blake3::Hasher>> = vec![
+    let list: Vec<MTreeNodeSmt<sha2::Sha256>> = vec![
         MTreeNodeSmt::new(vec![0; 32]),
         MTreeNodeSmt::new(vec![1; 32]),
         MTreeNodeSmt::new(vec![2; 32]),
@@ -31,7 +38,7 @@ fn main() {
     //Validate an incorrect root hash for a list of leaves.This will return false.
     let y = validate(
         &list,
-        "1ACC9779AB6EBD977EF3B27A5E0A66E9A335F7BC7C341DD093F8E21F4F0FAC7F",
+        "0ACC9779AB6EBD977EF3B27A5E0A66E9A335F7BC7C341DD093F8E21F4F0FAC7F",
     );
     dbg!(y);
 
@@ -48,16 +55,19 @@ fn main() {
         "351A810A1D5E96EB9A1AEA361672A61B24DEC8351F77B26A13217CE52B3BE55D",
     );
     dbg!(b);
+
+    test_merkle_tree();
+
 }
 
 //Input: All leaves in a vector,a hash as string
 //Output: Returns a boolean depending on weather or not the hash belongs to the MT
-fn search(list: &Vec<MTreeNodeSmt<blake3::Hasher>>, s: &str) -> bool {
-    let tree = SMT::<MTreeNodeSmt<blake3::Hasher>>::new_merkle_tree(&list);
+fn search(list: &Vec<MTreeNodeSmt<sha2::Sha256>>, s: &str) -> bool {
+    let tree = SMT::<MTreeNodeSmt<sha2::Sha256>>::new_merkle_tree(&list);
     let res = &tree.get_index_node_pairs();
 
     for x in res {
-        let nodeHash = to_hex_string(&((x.1).get_value().serialize()));
+        let nodeHash = hex::encode(&((x.1).get_value().serialize()));
         if s.eq(&nodeHash) {
             return true;
         }
@@ -68,25 +78,83 @@ fn search(list: &Vec<MTreeNodeSmt<blake3::Hasher>>, s: &str) -> bool {
 
 //Input: All leaves in a vector.
 //Output: Root hash as a string.
-fn create(list: &Vec<MTreeNodeSmt<blake3::Hasher>>) -> String {
-    let tree = SMT::<MTreeNodeSmt<blake3::Hasher>>::new_merkle_tree(&list);
+fn create(list: &Vec<MTreeNodeSmt<sha2::Sha256>>) -> String {
+    let tree = SMT::<MTreeNodeSmt<sha2::Sha256>>::new_merkle_tree(&list);
 
-    dbg!(to_hex_string(&tree.get_root_raw().serialize()));
+    dbg!(hex::encode(&tree.get_root_raw().serialize()));
     print_output(&tree);
 
-    return to_hex_string(&tree.get_root_raw().serialize());
+    return hex::encode(&tree.get_root_raw().serialize());
 }
 
 // Input :All leaves in a vector, root hash as a string.
 // Output : boolean that decides this is a valid MT
-fn validate(list: &Vec<MTreeNodeSmt<blake3::Hasher>>, s: &str) -> bool {
-    let tree = SMT::<MTreeNodeSmt<blake3::Hasher>>::new_merkle_tree(&list);
-    let root = to_hex_string(&tree.get_root_raw().serialize());
+fn validate(list: &Vec<MTreeNodeSmt<sha2::Sha256>>, s: &str) -> bool {
+    let tree = SMT::<MTreeNodeSmt<sha2::Sha256>>::new_merkle_tree(&list);
+    let root = hex::encode(&tree.get_root_raw().serialize());
 
     return s.eq(&root);
 }
 
-fn to_hex_string(bytes: &Vec<u8>) -> String {
-    let strs: Vec<String> = bytes.iter().map(|b| format!("{:02X}", b)).collect();
-    strs.connect("")
+fn verify_proof() -> bool{
+    let example_leaf = MTreeNodeSmt::new(vec![0; 32]);
+    let list: Vec<MTreeNodeSmt<sha2::Sha256>> = vec![example_leaf.clone(); 5];
+    let tree = SMT::<MTreeNodeSmt<sha2::Sha256>>::new_merkle_tree(&list);
+    assert_eq!(tree.get_height(), 3); // starting from zero
+    assert_eq!(tree.get_paddings().len(), 2);
+
+    // Add a single index in the proof generation (we prove one element only)
+    let index_list = vec![TreeIndex::from_u64(tree.get_height(), 2)];
+
+    let proof =  MerkleProof::<MTreeNodeSmt<sha2::Sha256>>::generate_inclusion_proof(&tree, &index_list).unwrap();
+    
+    dbg!(hex::encode(&(proof.serialize())));
+    dbg!(&(proof.serialize()));
+     
+    return proof.verify(&example_leaf, &tree.get_root());
 }
+
+fn test_merkle_tree() {
+    let leaf0 = MTreeNodeSmt::new("leaf0leaf0leaf0leaf0leaf0leaf0le".as_bytes().to_vec());
+    let leaf1 = MTreeNodeSmt::new("leaf1leaf1leaf1leaf1leaf1leaf1le".as_bytes().to_vec());
+    let leaf2 = MTreeNodeSmt::new("leaf2leaf2leaf2leaf2leaf2leaf2le".as_bytes().to_vec());
+    let leaf3 = MTreeNodeSmt::new("leaf3leaf3leaf3leaf3leaf3leaf3le".as_bytes().to_vec());
+
+
+    let list: Vec<MTreeNodeSmt<sha2::Sha256>> = vec![leaf0.clone(),leaf1.clone(),leaf2.clone(),leaf3.clone()];
+    let tree = SMT::<MTreeNodeSmt<sha2::Sha256>>::new_merkle_tree(&list);
+
+
+    assert_eq!(tree.get_height(), 2); // starting from zero
+    assert_eq!(tree.get_paddings().len(), 0);
+
+    print_output(&tree);
+
+
+    // Add a single index in the proof generation (we prove one element at index 0 only)
+    let index = vec![TreeIndex::from_u64(tree.get_height(), 0)];
+
+
+    let proof =
+        MerkleProof::<MTreeNodeSmt<sha2::Sha256>>::generate_inclusion_proof(&tree, &index)
+            .unwrap();
+    assert_eq!(proof.verify(&leaf0, &tree.get_root()), true);
+
+
+    let serialized_proof = proof.serialize();
+    let deserialized_proof = MerkleProof::<MTreeNodeSmt<sha2::Sha256>>::deserialize(&serialized_proof).unwrap();
+    assert_eq!(serialized_proof, deserialized_proof.serialize());
+    assert_eq!(
+        deserialized_proof.verify(&leaf0, &tree.get_root()),
+        true
+    );
+
+
+    let y =  &tree.get_root().serialize();
+    let z = y.as_slice();
+    dbg!(&z);
+    dbg!(hex::encode(&z));
+    dbg!(&tree);
+
+}
+
