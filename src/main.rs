@@ -1,15 +1,13 @@
 extern crate hex_slice;
 use crate::node_template::MTreeNodeSmt;
-use blake2::Digest;
+use sha2::Digest;
 use sha2::Sha256;
 use smtree::{node_template, traits::Serializable, tree::SparseMerkleTree, utils::print_output};
 type SMT<P> = SparseMerkleTree<P>;
 use smtree::index::{TreeIndex};
 use smtree::proof::{MerkleProof};
-use smtree::traits::{InclusionProvable, ProofExtractable};
+use smtree::traits::InclusionProvable;
 use std::str;
-use hex::{encode,decode};
-
 
 
 fn main() {
@@ -69,8 +67,8 @@ fn search(list: &Vec<MTreeNodeSmt<sha2::Sha256>>, s: &str) -> bool {
     let res = &tree.get_index_node_pairs();
 
     for x in res {
-        let nodeHash = hex::encode(&((x.1).get_value().serialize()));
-        if s.eq(&nodeHash) {
+        let node_hash = hex::encode(&((x.1).get_value().serialize()));
+        if s.eq(&node_hash) {
             return true;
         }
     }
@@ -98,7 +96,7 @@ fn validate(list: &Vec<MTreeNodeSmt<sha2::Sha256>>, s: &str) -> bool {
     return s.eq(&root);
 }
 
-fn verify_proof() -> bool{
+fn _verify_proof() -> bool {
     let example_leaf = MTreeNodeSmt::new(vec![0; 32]);
     let list: Vec<MTreeNodeSmt<sha2::Sha256>> = vec![example_leaf.clone(); 5];
     let tree = SMT::<MTreeNodeSmt<sha2::Sha256>>::new_merkle_tree(&list);
@@ -119,21 +117,32 @@ fn verify_proof() -> bool{
 #[test]
 // run with " cargo test -- --nocapture " to see print outs on tests that pass.
 fn hash_sanity() {
+    let secret = b"leaf0leaf0leaf0leaf0leaf0leaf0le";
     let mut a = sha2::Sha256::new();
-    a.update(b"leaf0leaf0leaf0leaf0leaf0leaf0le");
-    // dbg!(&hex::encode(a.finalize()));
-    assert_eq!("96f1ce1008b5c50024edbd0652c0e3b6213d38b8ee55c9b44a34cb95e5d05892", &hex::encode(&a.finalize()))
+    a.update(secret);
+    let sha_hash = &hex::encode(a.finalize());
+    dbg!(sha_hash);
+    assert_eq!("96f1ce1008b5c50024edbd0652c0e3b6213d38b8ee55c9b44a34cb95e5d05892", sha_hash);
+
+    let mut b = blake2::Blake2b::new();
+    b.update(secret);
+    let blake_hash = &hex::encode(b.finalize());
+    dbg!(blake_hash);
+    assert_eq!("852c54b76e614e31ab2246ac8994a5ed38a4101940495a6478551a25ea0b7496bfce1a848c1679e1ee8a256ebd2c7bb46b98ab9752f94c28fc9ee4140037d7e5", blake_hash)
 }
 
 #[test]
 // run with " cargo test -- --nocapture " to see print outs on tests that pass.
 fn correct_hasher() {
+    
     let leaf0 = MTreeNodeSmt::<Sha256>::new(b"leaf0leaf0leaf0leaf0leaf0leaf0le".to_vec());    
     let leaf0alt = MTreeNodeSmt::<blake2::Blake2b>::new(b"leaf0leaf0leaf0leaf0leaf0leaf0le".to_vec());
 
-    dbg!(&hex::encode(leaf0.serialize()));
-    dbg!(&hex::encode(leaf0alt.serialize()));
+    // NOTE: weird, these outputs are neither the Hash of Sha2 nor a blake2b Hash
+    dbg!(&hex::encode(leaf0.serialize()));  // not a sha hash
+    dbg!(&hex::encode(leaf0alt.serialize())); // not a blake hash
 
+    // NOTE: weird, these hashes are the same, with blake or sha
     assert_ne!(&hex::encode(leaf0.serialize()), &hex::encode(leaf0alt.serialize()));
     assert_ne!(leaf0.serialize(), leaf0alt.serialize());
 }
