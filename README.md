@@ -1,7 +1,9 @@
 # myApp
 Demo of Smtree from novi
 
-Test 
+Test  (no need to build)
 ----
-#cargo build
-#Execute binary in target/debug/myApp
+#cargo test
+
+
+
